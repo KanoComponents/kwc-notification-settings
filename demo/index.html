@@ -1,0 +1,56 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, minimum-scale=1, initial-scale=1, user-scalable=yes">
+
+    <title>kwc-notification-settings demo</title>
+
+    <script src="../../webcomponentsjs/webcomponents-lite.js"></script>
+
+    <link rel="import" href="../../iron-demo-helpers/demo-pages-shared-styles.html">
+    <link rel="import" href="../../iron-demo-helpers/demo-snippet.html">
+    <link rel="import" href="../kwc-notification-settings.html">
+
+    <custom-style>
+      <style is="custom-style" include="demo-pages-shared-styles"></style>
+    </custom-style>
+  </head>
+  <body>
+    <div class="vertical-section-container centered">
+      <h3>Basic kwc-notification-settings demo</h3>
+      <demo-snippet>
+        <template is="dom-bind" id="demo">
+          <kwc-notification-settings display-title
+                                     badges="[[badges]]"
+                                     comments="[[comments]]"
+                                     follows="[[follows]]"
+                                     likes="[[likes]]"
+                                     shares="[[shares]]"
+                                     updated="[[updated]]"
+                                     updating="[[updating]]"
+                                     on-update-notifications="updateNotifications">
+                                     </kwc-notification-settings>
+        </template>
+      </demo-snippet>
+      <script>
+          document.addEventListener('WebComponentsReady', () => {
+              demo.checked = true;
+              demo.badges = true;
+              demo.follows = true;
+              demo.updateNotifications = function (e) {
+                  demo.updating = true;
+                  window.setTimeout(() => {
+                      for (var property in e.detail) {
+                          demo[property] = e.detail[property];
+                      }
+                      demo.updating = false;
+                      demo.updated = true;
+                  }, 1500);
+
+              }
+          });
+      </script>
+    </div>
+  </body>
+</html>

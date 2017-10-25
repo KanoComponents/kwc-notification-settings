@@ -1,0 +1,270 @@
+<link rel="import" href="../polymer/polymer.html">
+<link rel="import" href="../iron-flex-layout/iron-flex-layout.html">
+<link rel="import" href="../paper-spinner/paper-spinner-lite.html">
+<link rel="import" href="../kwc-style/kwc-style.html">
+<link rel="import" href="../kwc-button/kwc-button.html">
+
+<!--
+`kwc-notification-settings`
+A small component to display the notification options available to users and allow them to update these.
+
+@demo demo/index.html
+-->
+
+<dom-module id="kwc-notification-settings">
+    <template>
+        <style is="custom-style" include="input-checkbox">
+            :root {
+                --paper-spinner-color: var(--color-kano-orange);
+            }
+            :host {
+                display: block;
+            }
+            :host * {
+                box-sizing: border-box;
+            }
+            :host h3 {
+                color: var(--color-black);
+                font-family: var(--font-heading);
+                font-size: 18px;
+                margin: 0 0 32px 0;
+                text-transform: uppercase;
+            }
+            :host p,
+            :host li,
+            :host label {
+                color: var(--color-black);
+                font-family: var(--font-body);
+            }
+            :host .content {
+                position: relative;
+            }
+            :host form {
+                @apply --layout-vertical;
+                @apply --layout-start-justified;
+                @apply --layout-start;
+                margin: 0;
+                padding: 0 0 24px 0;
+            }
+            :host fieldset {
+                border: 0;
+                margin: 0;
+                padding: 0 0 16px 0;
+                width: 100%;
+            }
+            :host .overlay {
+                @apply --layout-fit;
+                background-color: white;
+                margin: auto;
+                text-align: center;
+            }
+            :host .overlay-label {
+                color: var(--color-abbey);
+                font-size: 16px;
+                font-family: var(--font-body);
+                font-weight: bold;
+                margin: 0;
+                padding-bottom: 24px;
+            }
+            :host paper-spinner-lite {
+                display: block;
+                margin: auto;
+            }
+            :host *[hidden] {
+                display: none !important;
+            }
+        </style>
+        <h3 hidden$="[[!displayTitle]]">Notification preferences</h3>
+        <div class="content">
+            <form on-submit="_updatePassword">
+                <fieldset>
+                    <input type="checkbox" id="badges" checked="{{badges::change}}" on-change="_registerChange">
+                    <label for="badges">Badges</label>
+                </fieldset>
+                <fieldset>
+                    <input type="checkbox" id="comments" checked="{{comments::change}}" on-tap="_registerChange">
+                    <label for="comments">Comments</label>
+                </fieldset>
+                <fieldset>
+                    <input type="checkbox" id="follows" checked="{{follows::change}}" on-tap="_registerChange">
+                    <label for="follows">Follows</label>
+                </fieldset>
+                <fieldset>
+                    <input type="checkbox" id="likes" checked="{{likes::change}}" on-tap="_registerChange">
+                    <label for="likes">Likes</label>
+                </fieldset>
+                <fieldset>
+                    <input type="checkbox" id="shares" checked="{{shares::change}}" on-tap="_registerChange">
+                    <label for="shares">Shares</label>
+                </fieldset>
+                <kwc-button disabled$="[[!_changes]]"
+                            type="submit"
+                            variant="tertiary"
+                            square
+                            on-tap="_updateNotifications">
+                    Update
+                </kwc-button>
+            </form>
+            <template is="dom-if" if="[[updating]]">
+                <div class="overlay loader">
+                    <p class="overlay-label">Loading...</p>
+                    <paper-spinner-lite active="[[updating]]">
+                    </paper-spinner-lite>
+                </div>
+            </template>
+            <template is="dom-if" if="[[_updateError]]">
+                <div class="overlay error">
+                    <p class="overlay-label">Sorry, something went wrong.</p>
+                    <kwc-button type="button"
+                                variant="primary"
+                                square
+                                on-tap="_reset">
+                        Try again
+                    </kwc-button>
+                </div>
+            </template>
+            <template is="dom-if" if="[[updated]]">
+                <div class="overlay success">
+                    <p class="overlay-label">Success! Your Notification preferences have been updated.</p>
+                    <kwc-button type="button"
+                                variant="primary"
+                                square
+                                on-tap="_reset">
+                        Got it
+                    </kwc-button>
+                </div>
+            </template>
+        </div>
+    </template>
+
+    <script>
+        Polymer({
+            is: 'kwc-notification-settings',
+            properties: {
+                badges: {
+                    type: Boolean,
+                    value: false
+                },
+                _changes: {
+                    type: Boolean,
+                    computed: '_computeChanges(_changeLog.*)'
+                },
+                _changeLog: {
+                    type: Object,
+                    value: () => {
+                        return {}
+                    }
+                },
+                displayTitle: {
+                    type: Boolean,
+                    value: false
+                },
+                _intitialValues: {
+                    type: Object,
+                    value: () => {
+                        return {}
+                    }
+                },
+                comments: {
+                    type: Boolean,
+                    value: false
+                },
+                /** The update error (if applicable) */
+                error: {
+                    type: String
+                },
+                follows: {
+                    type: Boolean,
+                    value: false
+                },
+                _interaction: {
+                    type: Boolean,
+                    value: false
+                },
+                likes: {
+                    type: Boolean,
+                    value: false
+                },
+                shares: {
+                    type: Boolean,
+                    value: false
+                },
+                /**
+                 * Boolean to indicate whether there has been an error with
+                 * the update
+                 */
+                _updateError: {
+                    type: Boolean,
+                    computed: '_computeUpdateError(error)'
+                },
+                /** Boolean to indicate whether the email has been updated */
+                updated: {
+                    type: Boolean,
+                    value: false
+                },
+                /** Boolean to indicate whether the email is updating */
+                updating: {
+                    type: Boolean,
+                    value: false,
+                    observer: '_resetInitialValues'
+                }
+            },
+            _resetInitialValues (current, previous) {
+                if (!current && previous) {
+                    this._intitialValues = {
+                        badges: this.badges,
+                        comments: this.comments,
+                        follows: this.follows,
+                        likes: this.likes,
+                        shares: this.shares
+                    };
+                    this._changeLog = {};
+                }
+            },
+            _computeChanges (changeLog) {
+                let changes = false;
+                if (!changeLog || !changeLog.base) {
+                    return changes;
+                }
+                for (let property in changeLog.base) {
+                    let change = changeLog.base[property];
+                    if (change) {
+                        changes = true;
+                    }
+                }
+                return changes;
+            },
+            /**
+             * Return a boolean to indicate whether there is an update error
+             * @param {String} error
+             * @returns {Boolean}
+             */
+            _computeUpdateError (error) {
+                return error && error.length ? true : false;
+            },
+            _registerChange (e) {
+                let update = e.target.checked,
+                    property = e.target.id,
+                    initialValue = this._intitialValues[property],
+                    change = update !== initialValue;
+                this.set(`_changeLog.${property}`, change);
+            },
+            _reset () {
+                this.updated = false;
+                this.updating = false;
+                this.error = null;
+            },
+            _updateNotifications (e) {
+                e.preventDefault();
+                let payload = {};
+                for (let property in this._changeLog) {
+                    let change = this._changeLog[property];
+                    if (change) {
+                        payload[property] = this[property];
+                    }
+                }
+                this.fire('update-notifications', payload);
+            }
+        });
+    </script>
+</dom-module>
