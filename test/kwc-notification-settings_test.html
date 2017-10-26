@@ -145,7 +145,7 @@
                   updated.addEventListener('update-notification-settings', (e) => {
                       assert.equal(e.detail.shares, false);
                       done();
-                  })
+                  });
                   var testEvent = {
                         target: {
                             checked: false,
