@@ -29,7 +29,7 @@
                                      shares="[[shares]]"
                                      updated="[[updated]]"
                                      updating="[[updating]]"
-                                     on-update-notifications="updateNotifications">
+                                     on-update-notification-settings="updateNotificationSettings">
                                      </kwc-notification-settings>
         </template>
       </demo-snippet>
@@ -38,7 +38,7 @@
               demo.checked = true;
               demo.badges = true;
               demo.follows = true;
-              demo.updateNotifications = function (e) {
+              demo.updateNotificationSettings = function (e) {
                   demo.updating = true;
                   window.setTimeout(() => {
                       for (var property in e.detail) {

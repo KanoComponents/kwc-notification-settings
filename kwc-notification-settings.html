@@ -141,50 +141,84 @@ A small component to display the notification options available to users and all
         Polymer({
             is: 'kwc-notification-settings',
             properties: {
+                /**
+                 * Boolean to indicate whether the user is signed up to receive
+                 * badge notifications
+                 */
                 badges: {
                     type: Boolean,
                     value: false
                 },
+                /**
+                 * Boolean to indicate whether changes have been made to the
+                 * settings by the user – the submit button should be disabled
+                 * until changes have been made, as there's no point in the user
+                 * submitting the form without updating their settings
+                 */
                 _changes: {
                     type: Boolean,
                     computed: '_computeChanges(_changeLog.*)'
                 },
+                /**
+                 * An log of whether changes have been made to any of the
+                 * settings booleans – badges, comments, follows, likes or
+                 * shares
+                 */
                 _changeLog: {
                     type: Object,
                     value: () => {
                         return {}
                     }
                 },
+                /** Boolean to toggle the title display */
                 displayTitle: {
                     type: Boolean,
                     value: false
                 },
+                /**
+                 * A cache of initial values for each of the settings booleans
+                 * so that their current state can be compared, and the change
+                 * log updated
+                 */
                 _intitialValues: {
                     type: Object,
                     value: () => {
                         return {}
                     }
                 },
+                /**
+                 * Boolean to indicate whether the user is signed up to receive
+                 * comment notifications
+                 */
                 comments: {
                     type: Boolean,
                     value: false
                 },
                 /** The update error (if applicable) */
                 error: {
-                    type: String
+                    type: String,
+                    value: null
                 },
+                /**
+                 * Boolean to indicate whether the user is signed up to receive
+                 * follow notifications
+                 */
                 follows: {
                     type: Boolean,
                     value: false
                 },
-                _interaction: {
-                    type: Boolean,
-                    value: false
-                },
+                /**
+                 * Boolean to indicate whether the user is signed up to receive
+                 * like notifications
+                 */
                 likes: {
                     type: Boolean,
                     value: false
                 },
+                /**
+                 * Boolean to indicate whether the user is signed up to receive
+                 * share notifications
+                 */
                 shares: {
                     type: Boolean,
                     value: false
@@ -197,18 +231,28 @@ A small component to display the notification options available to users and all
                     type: Boolean,
                     computed: '_computeUpdateError(error)'
                 },
-                /** Boolean to indicate whether the email has been updated */
+                /**
+                 * Boolean to indicate whether the settings have been updated
+                 */
                 updated: {
                     type: Boolean,
                     value: false
                 },
-                /** Boolean to indicate whether the email is updating */
+                /** Boolean to indicate whether the settings are updating */
                 updating: {
                     type: Boolean,
                     value: false,
                     observer: '_resetInitialValues'
                 }
             },
+            /**
+             * Reset the `_intitialValues` and `_changeLog` when the element has
+             * been updated – either for the first time, or after submitting
+             * changes (the parent is responsible for toggling the updating
+             * property)
+             * @param {Boolean} current The current value of `updating`
+             * @param {Boolean} previous The previous value of `updating`
+             */
             _resetInitialValues (current, previous) {
                 if (!current && previous) {
                     this._intitialValues = {
@@ -221,6 +265,12 @@ A small component to display the notification options available to users and all
                     this._changeLog = {};
                 }
             },
+            /**
+             * Compute whether changes have been made to the component from the
+             * `_changeLog`
+             * @param {Object} changeLog
+             * @returns {Boolean}
+             */
             _computeChanges (changeLog) {
                 let changes = false;
                 if (!changeLog || !changeLog.base) {
@@ -242,6 +292,10 @@ A small component to display the notification options available to users and all
             _computeUpdateError (error) {
                 return error && error.length ? true : false;
             },
+            /**
+             * Register a change in the `_changeLog` when an `input` is updated
+             * @param {Event} e The change object from the `input` element
+             */
             _registerChange (e) {
                 let update = e.target.checked,
                     property = e.target.id,
@@ -249,11 +303,20 @@ A small component to display the notification options available to users and all
                     change = update !== initialValue;
                 this.set(`_changeLog.${property}`, change);
             },
+            /**
+             * Reset the component – the values of the settings booleans
+             * (badges, comments, follows, likes and shares) are not being
+             * reset, as these are set and updated by the parent
+             */
             _reset () {
                 this.updated = false;
                 this.updating = false;
                 this.error = null;
             },
+            /**
+             * Fire the event to the parent to update the settings
+             * @param {Event} e The submit event from the form
+             */
             _updateNotifications (e) {
                 e.preventDefault();
                 let payload = {};
@@ -263,7 +326,7 @@ A small component to display the notification options available to users and all
                         payload[property] = this[property];
                     }
                 }
-                this.fire('update-notifications', payload);
+                this.fire('update-notification-settings', payload);
             }
         });
     </script>

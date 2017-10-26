@@ -1,30 +1,191 @@
 <!doctype html>
 <html lang="en">
-  <head>
-    <meta charset="utf-8">
-    <meta name="viewport" content="width=device-width, minimum-scale=1, initial-scale=1, user-scalable=yes">
+    <head>
+        <meta charset="utf-8">
+        <meta name="viewport" content="width=device-width, minimum-scale=1, initial-scale=1, user-scalable=yes">
 
-    <title>kwc-notification-settings test</title>
+        <title>kwc-notification-settings test</title>
 
-    <script src="../../webcomponentsjs/webcomponents-lite.js"></script>
-    <script src="../../web-component-tester/browser.js"></script>
+        <script src="../../webcomponentsjs/webcomponents-lite.js"></script>
+        <script src="../../web-component-tester/browser.js"></script>
 
-    <link rel="import" href="../kwc-notification-settings.html">
-  </head>
-  <body>
-    <test-fixture id="basic">
-      <template>
-        <kwc-notification-settings></kwc-notification-settings>
-      </template>
-    </test-fixture>
+        <link rel="import" href="../kwc-notification-settings.html">
+    </head>
+    <body>
+      <test-fixture id="basic">
+          <template>
+              <kwc-notification-settings></kwc-notification-settings>
+          </template>
+      </test-fixture>
+      <test-fixture id="updated">
+          <template>
+              <kwc-notification-settings></kwc-notification-settings>
+          </template>
+      </test-fixture>
 
-    <script>
-      suite('kwc-notification-settings', function() {
-        test('instantiating the element works', function() {
-          var element = fixture('basic');
-          assert.equal(element.is, 'kwc-notification-settings');
-        });
-      });
-    </script>
-  </body>
+      <script>
+          var basic,
+              updated,
+              basicButton,
+              updatedButton
+
+          setup(function () {
+              basic = fixture('basic');
+              updated = fixture('updated');
+              basicButton = Polymer.dom(basic.root).querySelector('kwc-button');
+              updatedButton = Polymer.dom(updated.root).querySelector('kwc-button');
+          });
+
+          suite('Component defaults', function() {
+              test('instantiating the element works', function() {
+                  assert.equal(basic.is, 'kwc-notification-settings');
+              });
+
+              test('all settings should be false by default', function() {
+                  assert.equal(basic.badges, false);
+                  assert.equal(basic.comments, false);
+                  assert.equal(basic.follows, false);
+                  assert.equal(basic.likes, false);
+                  assert.equal(basic.shares, false);
+              });
+
+              test('the component should not be updated or updating by default', function() {
+                  assert.equal(basic.updating, false);
+                  assert.equal(basic.updated, false);
+              });
+
+              test('there should be no error by defualt', function() {
+                  assert.equal(basic.error, null);
+                  assert.equal(basic._updateError, false);
+              });
+
+              test('the initial values should be an empty object by default', function() {
+                  assert.isObject(basic._intitialValues);
+                  assert.lengthOf(Object.keys(basic._intitialValues), 0);
+              });
+
+              test('the change log should be an empty object by default', function() {
+                  assert.isObject(basic._changeLog);
+                  assert.lengthOf(Object.keys(basic._changeLog), 0);
+              });
+
+              test('there should be no changes by default', function() {
+                  assert.equal(basic._changes, false);
+              });
+
+              test('the submit button should be disabled by default', function() {
+                  assert.equal(basicButton.disabled, true);
+              });
+          });
+
+          suite('Updating the component', function() {
+              setup(function () {
+                  updated.updating = true;
+                  updated.badges = true;
+                  updated.comments = true;
+                  updated.follows = true;
+                  updated.likes = true;
+                  updated.shares = true;
+                  updated.updating = false;
+              });
+
+              test('it should be possible to set the settings values imperatively', function() {
+                  assert.equal(updated.badges, true);
+                  assert.equal(updated.comments, true);
+                  assert.equal(updated.follows, true);
+                  assert.equal(updated.likes, true);
+                  assert.equal(updated.shares, true);
+              });
+
+              test('the initial values should be set', function() {
+                  assert.lengthOf(Object.keys(updated._intitialValues), 5);
+                  assert.equal(updated._intitialValues.badges, true);
+                  assert.equal(updated._intitialValues.comments, true);
+                  assert.equal(updated._intitialValues.follows, true);
+                  assert.equal(updated._intitialValues.likes, true);
+                  assert.equal(updated._intitialValues.shares, true);
+              });
+
+              test('the change log should update when changes are registered', function() {
+                  var testEvent = {
+                        target: {
+                            checked: false,
+                            id: 'badges'
+                        }
+                  };
+                  updated._registerChange(testEvent);
+                  assert.equal(updated._changeLog.badges, true);
+                  assert.equal(updated._changes, true);
+              });
+
+              test('restoring a value should undo the changes in the change log and set the component changes back to false', function() {
+                  var testEvent = {
+                        target: {
+                            checked: true,
+                            id: 'badges'
+                        }
+                  };
+                  updated._registerChange(testEvent);
+                  assert.equal(updated._changeLog.badges, false);
+                  assert.equal(updated._changes, false);
+              });
+
+              test('the submit button should be enabled when there are changes', function() {
+                  var testEvent = {
+                        target: {
+                            checked: false,
+                            id: 'badges'
+                        }
+                  };
+                  updated._registerChange(testEvent);
+                  assert.equal(updatedButton.disabled, false);
+              });
+
+              test('clicking the submit button should fire a change event', function(done) {
+                  updated.addEventListener('update-notification-settings', (e) => {
+                      assert.equal(e.detail.shares, false);
+                      done();
+                  })
+                  var testEvent = {
+                        target: {
+                            checked: false,
+                            id: 'shares'
+                        }
+                  };
+                  /** Set the `shares` value to false */
+                  updated.shares = false;
+                  /**
+                   * Then register the change to simulate clicking on the
+                   * checkbox
+                   */
+                  updated._registerChange(testEvent);
+                  updatedButton.click();
+              });
+
+              test('resetting the element should set updated and updating back to false, and clear any errors', function() {
+                  var errorMessage = 'Can\'t update';
+
+                  /** Set the values */
+                  updated.updated = true;
+                  updated.updating = true;
+                  updated.error = errorMessage;
+
+                  /** Verify the changes */
+                  assert.equal(updated.updated, true);
+                  assert.equal(updated.updating, true);
+                  assert.equal(updated.error, errorMessage);
+                  assert.equal(updated._updateError, true);
+
+                  /** Reset the element */
+                  updated._reset();
+
+                  /** Verify that the values have been reset */
+                  assert.equal(updated.updated, false);
+                  assert.equal(updated.updating, false);
+                  assert.equal(updated.error, null);
+                  assert.equal(updated._updateError, false);
+              });
+          });
+      </script>
+    </body>
 </html>
