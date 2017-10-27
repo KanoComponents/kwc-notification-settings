@@ -32,8 +32,8 @@
           setup(function () {
               basic = fixture('basic');
               updated = fixture('updated');
-              basicButton = Polymer.dom(basic.root).querySelector('kwc-button');
-              updatedButton = Polymer.dom(updated.root).querySelector('kwc-button');
+              basicButton = Polymer.dom(basic.root).querySelector('kwc-button[type="submit"]');
+              updatedButton = Polymer.dom(updated.root).querySelector('kwc-button[type="submit"]');
           });
 
           suite('Component defaults', function() {

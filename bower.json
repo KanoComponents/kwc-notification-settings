@@ -5,7 +5,7 @@
   "dependencies": {
     "polymer": "Polymer/polymer#^1.9.0",
     "kwc-style": "git@github.com:KanoComponents/kwc-style.git#v1.x",
-    "kwc-button": "git@github.com:KanoComponents/kwc-button.git#v1.x",
+    "kwc-button": "git@github.com:KanoComponents/kwc-button.git#v2.x",
     "paper-spinner": "^2.0.0",
     "iron-flex-layout": "^2.0.0"
   },

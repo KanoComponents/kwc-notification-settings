@@ -15,7 +15,7 @@ A small component to display the notification options available to users and all
     <template>
         <style is="custom-style" include="input-checkbox">
             :root {
-                --paper-spinner-color: var(--color-kano-orange);
+                --paper-spinner-color: white;
             }
             :host {
                 display: block;
@@ -35,6 +35,7 @@ A small component to display the notification options available to users and all
             :host label {
                 color: var(--color-black);
                 font-family: var(--font-body);
+                margin: 0;
             }
             :host .content {
                 position: relative;
@@ -52,19 +53,16 @@ A small component to display the notification options available to users and all
                 padding: 0 0 16px 0;
                 width: 100%;
             }
-            :host .overlay {
-                @apply --layout-fit;
-                background-color: white;
-                margin: auto;
-                text-align: center;
+            :host .footer {
+                @apply --layout-horizontal;
+                @apply --layout-start-justified;
+                @apply --layout--start;
             }
-            :host .overlay-label {
-                color: var(--color-abbey);
-                font-size: 16px;
-                font-family: var(--font-body);
-                font-weight: bold;
-                margin: 0;
-                padding-bottom: 24px;
+            :host .messages {
+                margin-left: 16px;
+            }
+            :host .message ~ .message {
+                margin-top: 8px;
             }
             :host paper-spinner-lite {
                 display: block;
@@ -97,43 +95,38 @@ A small component to display the notification options available to users and all
                     <input type="checkbox" id="shares" checked="{{shares::change}}" on-tap="_registerChange">
                     <label for="shares">Shares</label>
                 </fieldset>
-                <kwc-button disabled$="[[!_changes]]"
-                            type="submit"
-                            variant="tertiary"
-                            square
-                            on-tap="_updateNotifications">
-                    Update
-                </kwc-button>
+                <div class="footer">
+                    <div class="actions">
+                         <kwc-button hidden$="[[!_displaySubmission]]"
+                                     disabled$="[[!_submissionEnabled]]"
+                                     type="submit"
+                                     variant="tertiary"
+                                     square
+                                     on-tap="_updateNotifications">
+                              <span hidden$="[[updating]]">Update</span>
+                              <paper-spinner-lite active="[[updating]]"></paper-spinner-lite>
+                          </kwc-button>
+                          <kwc-button type="button"
+                                      hidden$="[[!_updateError]]"
+                                      icon-id="kwc-ui-icons:close"
+                                      variant="warning"
+                                      square
+                                      on-tap="_reset">
+                          </kwc-button>
+                          <kwc-button type="button"
+                                      hidden$="[[!updated]]"
+                                      icon-id="kwc-ui-icons:tick"
+                                      variant="secondary"
+                                      square
+                                      on-tap="_reset">
+                          </kwc-button>
+                      </div>
+                      <div class="messages">
+                          <p class="success message" hidden$="[[!updated]]">Success! Your settings have been updated.</p>
+                          <p class="error message" hidden$="[[!_updateError]]">Sorry, something went wrong. Please try again.</p>
+                      </div>
+                </div>
             </form>
-            <template is="dom-if" if="[[updating]]">
-                <div class="overlay loader">
-                    <p class="overlay-label">Loading...</p>
-                    <paper-spinner-lite active="[[updating]]">
-                    </paper-spinner-lite>
-                </div>
-            </template>
-            <template is="dom-if" if="[[_updateError]]">
-                <div class="overlay error">
-                    <p class="overlay-label">Sorry, something went wrong.</p>
-                    <kwc-button type="button"
-                                variant="primary"
-                                square
-                                on-tap="_reset">
-                        Try again
-                    </kwc-button>
-                </div>
-            </template>
-            <template is="dom-if" if="[[updated]]">
-                <div class="overlay success">
-                    <p class="overlay-label">Success! Your Notification preferences have been updated.</p>
-                    <kwc-button type="button"
-                                variant="primary"
-                                square
-                                on-tap="_reset">
-                        Got it
-                    </kwc-button>
-                </div>
-            </template>
         </div>
     </template>
 
@@ -169,6 +162,14 @@ A small component to display the notification options available to users and all
                     value: () => {
                         return {}
                     }
+                },
+                /**
+                 * Boolean to indicate whether the submit button should
+                 * be displayed
+                 */
+                _displaySubmission: {
+                    type: Boolean,
+                    computed: '_computeSubmissionDisplay(_updateError, updated)'
                 },
                 /** Boolean to toggle the title display */
                 displayTitle: {
@@ -222,6 +223,14 @@ A small component to display the notification options available to users and all
                 shares: {
                     type: Boolean,
                     value: false
+                },
+                /**
+                 * Boolean to incicate whether the submission button should
+                 * be enabled
+                 */
+                _submissionEnabled: {
+                    type: Boolean,
+                    computed: '_computeSubmissionEnabled(_changes, updating)'
                 },
                 /**
                  * Boolean to indicate whether there has been an error with
@@ -285,6 +294,24 @@ A small component to display the notification options available to users and all
                 return changes;
             },
             /**
+             * Compute whether the submission button should display
+             * @param {Boolean} error `_updateError`
+             * @param {Boolean} updated
+             * @returns {Boolean}
+             */
+            _computeSubmissionDisplay (error, updated) {
+                return !error && !updated;
+            },
+            /**
+             * Compute whether the submision button should be enabled
+             * @param {Boolean} changes
+             * @param {Boolean} updating
+             * @retuns {Boolean}
+             */
+            _computeSubmissionEnabled (changes, updating) {
+                return changes && !updating;
+            },
+            /**
              * Return a boolean to indicate whether there is an update error
              * @param {String} error
              * @returns {Boolean}
@@ -319,14 +346,16 @@ A small component to display the notification options available to users and all
              */
             _updateNotifications (e) {
                 e.preventDefault();
-                let payload = {};
-                for (let property in this._changeLog) {
-                    let change = this._changeLog[property];
-                    if (change) {
-                        payload[property] = this[property];
+                if (this._submissionEnabled) {
+                    let payload = {};
+                    for (let property in this._changeLog) {
+                        let change = this._changeLog[property];
+                        if (change) {
+                            payload[property] = this[property];
+                        }
                     }
+                    this.fire('update-notification-settings', payload);
                 }
-                this.fire('update-notification-settings', payload);
             }
         });
     </script>
